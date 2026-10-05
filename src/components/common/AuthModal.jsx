@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n/i18nContext';
 import { useToast } from '../../context/ToastContext';
 import { Mail, Shield, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export const AuthModal = ({ isOpen, onClose }) => {
   const { t, currentLang } = useI18n();
@@ -10,24 +11,25 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const { addToast } = useToast();
 
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [step, setStep] = useState('email'); // 'email' | 'otp'
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState('contact'); // 'contact' | 'otp'
+  const [contact, setContact] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('customer'); // 'customer' | 'contractor' | 'worker'
   const [city, setCity] = useState('Nagpur');
+  const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      addToast('Please enter a valid email', 'error');
+    if (!contact) {
+      addToast('Please enter a valid email or phone number', 'error');
       return;
     }
     setLoading(true);
-    const res = await requestOtp(email);
+    const res = await requestOtp(contact);
     setLoading(false);
     if (res.success) {
       setStep('otp');
@@ -43,18 +45,47 @@ export const AuthModal = ({ isOpen, onClose }) => {
       addToast('Please enter 6-digit OTP', 'error');
       return;
     }
+    
+    if (isRegisterMode && role !== 'customer' && !imageFile) {
+      addToast('Please upload the required image for your profile.', 'error');
+      return;
+    }
 
     setLoading(true);
-    const regData = isRegisterMode ? { name, role, city, preferredLanguage: currentLang } : null;
-    const res = await verifyOtpAndLogin(email, otp, regData);
+    let uploadedImageUrl = null;
+    
+    if (isRegisterMode && imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${role}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, imageFile);
+            
+        if (uploadError) {
+            setLoading(false);
+            addToast('Image upload failed: ' + uploadError.message, 'error');
+            return;
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+            
+        uploadedImageUrl = publicUrlData.publicUrl;
+    }
+
+    const regData = isRegisterMode ? { name, role, city, preferredLanguage: currentLang, imageUrl: uploadedImageUrl } : null;
+    const res = await verifyOtpAndLogin(contact, otp, regData);
     setLoading(false);
 
     if (res.success) {
-      addToast(`Welcome ${res.user.user_metadata?.full_name || ''}!`, 'success');
+      addToast(`Welcome ${res.user?.user_metadata?.full_name || ''}!`, 'success');
       onClose();
       // Reset
-      setStep('email');
-      setEmail('');
+      setStep('contact');
+      setContact('');
       setOtp('');
     } else {
       addToast(res.message, 'error');
@@ -85,7 +116,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="modal-body">
-          {step === 'email' ? (
+          {step === 'contact' ? (
             <form onSubmit={handleSendOtp}>
               {isRegisterMode && (
                 <>
@@ -147,22 +178,37 @@ export const AuthModal = ({ isOpen, onClose }) => {
                       <option value="Kolkata">Kolkata</option>
                     </select>
                   </div>
+
+                  {role !== 'customer' && (
+                    <div className="form-group">
+                      <label className="form-label">
+                        {role === 'contractor' ? 'Prior Work / Portfolio Image' : 'Profile Picture'} *
+                      </label>
+                      <input
+                        type="file"
+                        className="form-control"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files[0])}
+                        required
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">Email or Phone Number</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <span style={{ position: 'absolute', left: '1rem', color: 'var(--slate-400)' }}>
                     <Mail size={16} />
                   </span>
                   <input
-                    type="email"
+                    type="text"
                     className="form-control"
                     style={{ paddingLeft: '2.8rem' }}
-                    placeholder="ramesh@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ramesh@example.com OR 9876543210"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
                     required
                   />
                 </div>

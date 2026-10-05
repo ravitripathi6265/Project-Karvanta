@@ -58,27 +58,48 @@ export const AuthProvider = ({ children }) => {
     return { success: true };
   };
 
-  // We are using Email Magic Link instead of SMS OTP to bypass Twilio config issues
-  const requestOtp = async (email) => {
-    if (!email || !email.includes('@')) {
-      return { success: false, message: 'Please enter a valid email address' };
+  const requestOtp = async (contact) => {
+    if (!contact) {
+      return { success: false, message: 'Please enter a valid email or phone number' };
     }
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email,
-    });
+    
+    let error = null;
+    if (contact.includes('@')) {
+      const res = await supabase.auth.signInWithOtp({ email: contact });
+      error = res.error;
+    } else {
+      const phone = contact.startsWith('+') ? contact : `+91${contact}`;
+      const res = await supabase.auth.signInWithOtp({ phone });
+      error = res.error;
+    }
     
     if (error) {
       return { success: false, message: error.message };
     }
-    return { success: true, message: `OTP / Magic Link sent to ${email}.` };
+    return { success: true, message: `OTP sent to ${contact}.` };
   };
 
-  const verifyOtpAndLogin = async (email, otp, registrationData = null) => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email,
-      token: otp,
-      type: 'email',
-    });
+  const verifyOtpAndLogin = async (contact, otp, registrationData = null) => {
+    let error = null, data = null;
+    
+    if (contact.includes('@')) {
+      const res = await supabase.auth.verifyOtp({
+        email: contact,
+        token: otp,
+        type: 'email',
+      });
+      error = res.error;
+      data = res.data;
+    } else {
+      const phone = contact.startsWith('+') ? contact : `+91${contact}`;
+      const res = await supabase.auth.verifyOtp({
+        phone,
+        token: otp,
+        type: 'sms',
+      });
+      error = res.error;
+      data = res.data;
+    }
 
     if (error) {
       return { success: false, message: error.message };
@@ -91,6 +112,7 @@ export const AuthProvider = ({ children }) => {
           full_name: registrationData.name,
           role: registrationData.role || 'customer',
           city: registrationData.city || 'Nagpur',
+          avatar_url: registrationData.role === 'worker' ? registrationData.imageUrl : null
         })
         .eq('id', data.user.id);
         
@@ -103,7 +125,8 @@ export const AuthProvider = ({ children }) => {
                   experience_years: registrationData.experience || 0,
                   rate_per_day: registrationData.rate || 0,
                   skills: registrationData.skills || [],
-                  languages: [registrationData.preferredLanguage || 'hi']
+                  languages: [registrationData.preferredLanguage || 'hi'],
+                  portfolio_image_url: registrationData.role === 'contractor' ? registrationData.imageUrl : null
               }
           ]);
       }

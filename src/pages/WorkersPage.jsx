@@ -53,17 +53,17 @@ export const WorkersPage = ({ onViewWorker, onHireWorker }) => {
           profession: 'Skilled Karigar',
           city: profile.city || 'Nagpur',
           locality: 'Local Area',
-          rating: 5.0,
+          rating: 0,
           reviewCount: 0,
           yearsExp: profile.professional_details?.experience_years || 0,
           dailyRate: profile.professional_details?.rate_per_day || 850,
           status: 'availableToday', // Could be fetched from a live status column
-          avatar: profile.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+          avatar: profile.avatar_url || 'https://via.placeholder.com/150',
           verified: { identity: true },
-          languages: profile.professional_details?.languages || ['Hindi'],
-          skills: profile.professional_details?.skills || ['General Masonry'],
-          phone: profile.phone_number || '9876543210',
-          whatsapp: `91${profile.phone_number || '9876543210'}`
+          languages: profile.professional_details?.languages || [],
+          skills: profile.professional_details?.skills || [],
+          phone: profile.phone_number || '',
+          whatsapp: profile.phone_number ? `91${profile.phone_number}` : ''
         }));
         setWorkers(formatted);
       }

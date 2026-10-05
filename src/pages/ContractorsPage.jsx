@@ -34,7 +34,8 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
             experience_years,
             rate_per_day,
             languages,
-            bio
+            bio,
+            portfolio_image_url
           )
         `)
         .eq('role', 'contractor')
@@ -52,18 +53,19 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
           profession: 'General Contractor',
           city: profile.city || 'Nagpur',
           locality: 'Main City',
-          rating: 5.0, // Default mock rating
+          rating: 0,
           reviewCount: 0,
           yearsExp: profile.professional_details?.experience_years || 0,
-          teamSize: '5-10 Workers',
+          teamSize: 'Team Size Not Specified',
           completedProjects: 0,
-          avatar: profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-          verified: { identity: true }, // Approved means verified
-          services: profile.professional_details?.skills || ['Residential Construction'],
-          about: profile.professional_details?.bio || `Professional contractor serving ${profile.city}.`,
-          languages: profile.professional_details?.languages || ['Hindi'],
-          availability: 'Available for New Projects',
-          minBudget: '₹1,00,000',
+          avatar: profile.avatar_url || 'https://via.placeholder.com/150',
+          portfolioImage: profile.professional_details?.portfolio_image_url || null,
+          verified: { identity: true },
+          services: profile.professional_details?.skills || [],
+          about: profile.professional_details?.bio || '',
+          languages: profile.professional_details?.languages || [],
+          availability: 'Available',
+          minBudget: 'Not Specified',
           projects: []
         }));
         setContractors(formatted);
