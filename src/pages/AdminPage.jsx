@@ -19,11 +19,9 @@ export const AdminPage = () => {
   const { addToast } = useToast();
   const { currentUser } = useAuth();
 
-  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'approved' | 'rejected' | 'settings'
+  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'approved' | 'rejected'
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const fetchProfiles = async (status) => {
     setLoading(true);
@@ -65,25 +63,6 @@ export const AdminPage = () => {
     }
   };
 
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    if (!newPassword || newPassword.length < 6) {
-      addToast('Password must be at least 6 characters long', 'error');
-      return;
-    }
-
-    setPasswordLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setPasswordLoading(false);
-
-    if (error) {
-      console.error('Error changing password:', error);
-      addToast('Failed to change password. ' + error.message, 'error');
-    } else {
-      addToast('Password changed successfully!', 'success');
-      setNewPassword('');
-    }
-  };
 
   if (currentUser?.role !== 'admin') {
     return (
@@ -133,36 +112,9 @@ export const AdminPage = () => {
         >
           <XCircle size={14} /> Rejected
         </button>
-        <button
-          type="button"
-          className={`btn btn-sm ${activeSubTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveSubTab('settings')}
-        >
-          <Settings size={14} /> Settings
-        </button>
       </div>
 
-      {activeSubTab === 'settings' ? (
-        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', maxWidth: '400px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem' }}>Change Admin Password</h2>
-          <form onSubmit={handleChangePassword}>
-            <div className="form-group">
-              <label className="form-label">New Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={passwordLoading} style={{ width: '100%' }}>
-              {passwordLoading ? 'Updating...' : 'Update Password'}
-            </button>
-          </form>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--slate-500)' }}>
           Loading profiles...
         </div>
