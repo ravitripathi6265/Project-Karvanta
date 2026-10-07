@@ -38,7 +38,7 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
             <div>
               <div style={{ lineHeight: 1.1 }}>{t('app.name')}</div>
               <span className="brand-tagline">
-                {t('app.name') === 'Karvanta' ? 'कर्मवन्त' : 'Karvanta'}
+                {t('app.name') === 'Karvanta' ? 'करवंता' : 'Karvanta'}
               </span>
             </div>
           </button>

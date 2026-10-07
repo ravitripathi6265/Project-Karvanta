@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
 import { Send, MapPin, Users, Calendar, IndianRupee, ShieldCheck } from 'lucide-react';
+import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
 export const PostWorkPage = ({ setActiveTab }) => {
   const { t } = useI18n();
@@ -174,22 +175,12 @@ export const PostWorkPage = ({ setActiveTab }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
             <div className="form-group">
               <label className="form-label">City</label>
-              <select
+              <CityAutocomplete
                 className="form-control"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-              >
-                <option value="Nagpur">Nagpur</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Pune">Pune</option>
-                <option value="Indore">Indore</option>
-                <option value="Bhopal">Bhopal</option>
-                <option value="Delhi">Delhi NCR</option>
-                <option value="Hyderabad">Hyderabad</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Bengaluru">Bengaluru</option>
-                <option value="Kolkata">Kolkata</option>
-              </select>
+                onChange={(val) => setCity(val)}
+                placeholder="Search city..."
+              />
             </div>
 
             <div className="form-group">

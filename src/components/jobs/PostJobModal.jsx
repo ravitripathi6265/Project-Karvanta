@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { dbService } from '../../db/databaseService';
 import { X, Send, Calendar, Clock, MapPin, IndianRupee, Users } from 'lucide-react';
+import { CityAutocomplete } from '../common/CityAutocomplete';
 
 export const PostJobModal = ({ isOpen, onClose, onJobCreated }) => {
   const { t } = useI18n();
@@ -186,22 +187,12 @@ export const PostJobModal = ({ isOpen, onClose, onJobCreated }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label">City</label>
-                <select
+                <CityAutocomplete
                   className="form-control"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                >
-                  <option value="Nagpur">Nagpur</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Indore">Indore</option>
-                  <option value="Bhopal">Bhopal</option>
-                  <option value="Delhi">Delhi NCR</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Bengaluru">Bengaluru</option>
-                  <option value="Kolkata">Kolkata</option>
-                </select>
+                  onChange={(val) => setCity(val)}
+                  placeholder="Search city..."
+                />
               </div>
 
               <div className="form-group">

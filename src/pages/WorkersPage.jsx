@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { WorkerCard } from '../components/marketplace/WorkerCard';
 import { Search, MapPin, Filter, ShieldCheck, ArrowUpDown, Clock } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
 export const WorkersPage = ({ onViewWorker, onHireWorker }) => {
   const { t } = useI18n();
@@ -46,25 +47,29 @@ export const WorkersPage = ({ onViewWorker, onHireWorker }) => {
         console.error('Error fetching workers:', error);
         addToast('Failed to load workers.', 'error');
       } else {
-        const formatted = data.map(profile => ({
-          id: profile.id,
-          name: profile.full_name || 'Unknown',
-          category: 'mason', // We can derive this from skills later
-          profession: 'Skilled Karigar',
-          city: profile.city || 'Nagpur',
-          locality: 'Local Area',
-          rating: 0,
-          reviewCount: 0,
-          yearsExp: profile.professional_details?.experience_years || 0,
-          dailyRate: profile.professional_details?.rate_per_day || 850,
-          status: 'availableToday', // Could be fetched from a live status column
-          avatar: profile.avatar_url || 'https://via.placeholder.com/150',
-          verified: { identity: true },
-          languages: profile.professional_details?.languages || [],
-          skills: profile.professional_details?.skills || [],
-          phone: profile.phone_number || '',
-          whatsapp: profile.phone_number ? `91${profile.phone_number}` : ''
-        }));
+        const formatted = data.map(profile => {
+          const profDetails = Array.isArray(profile.professional_details) ? profile.professional_details[0] : profile.professional_details;
+          return {
+            id: profile.id,
+            name: profile.full_name || 'Unknown',
+            category: 'mason', // We can derive this from skills later
+            profession: 'Skilled Karigar',
+            city: profile.city || 'Nagpur',
+            locality: 'Local Area',
+            rating: 0,
+            reviewCount: 0,
+            yearsExp: profDetails?.experience_years || 0,
+            dailyRate: profDetails?.rate_per_day || 850,
+            status: 'availableToday', // Could be fetched from a live status column
+            avatar: profile.avatar_url || 'https://via.placeholder.com/150',
+            portfolioImage: profDetails?.portfolio_image_url || null,
+            verified: { identity: true },
+            languages: profDetails?.languages || [],
+            skills: profDetails?.skills || [],
+            phone: profile.phone_number || '',
+            whatsapp: profile.phone_number ? `91${profile.phone_number}` : ''
+          };
+        });
         setWorkers(formatted);
       }
       setLoading(false);
@@ -141,20 +146,11 @@ export const WorkersPage = ({ onViewWorker, onHireWorker }) => {
           {/* City filter */}
           <div className="search-input-group">
             <MapPin size={16} color="var(--slate-400)" />
-            <select
+            <CityAutocomplete
               value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-            >
-              <option value="">{t('common.allCities')}</option>
-              <option value="Nagpur">Nagpur</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Pune">Pune</option>
-              <option value="Bhopal">Bhopal</option>
-              <option value="Chennai">Chennai</option>
-              <option value="Delhi">Delhi NCR</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Bengaluru">Bengaluru</option>
-            </select>
+              onChange={(val) => setSelectedCity(val)}
+              placeholder={t('common.allCities') || "Search city..."}
+            />
           </div>
 
           {/* Trade Category */}

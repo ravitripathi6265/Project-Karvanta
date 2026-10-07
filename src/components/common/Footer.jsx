@@ -100,7 +100,7 @@ export const Footer = ({ setActiveTab }) => {
 
         <div className="footer-bottom">
           <div>
-            © 2026 {t('app.name')} (कर्मवन्त). {t('app.allRightsReserved')}
+            © 2026 {t('app.name')} (करवंता). {t('app.allRightsReserved')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <span>Made with</span> <Heart size={14} color="#EF4444" fill="#EF4444" /> <span>for Indian Builders & Karigars</span>

@@ -102,31 +102,23 @@ export const ContractorProfileModal = ({ contractor, isOpen, onClose, onRequestQ
           </div>
 
           {/* Previous Projects Gallery */}
-          {contractor.projects && contractor.projects.length > 0 && (
+          {contractor.portfolioImage && (
             <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{ fontSize: '0.95rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--slate-800)' }}>
-                Previous Projects & Work Evidence ({contractor.projects.length})
+                Work Evidence & Portfolio Images
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
-                {contractor.projects.map((proj) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                {contractor.portfolioImage.split(',').filter(Boolean).map((imgUrl, idx) => (
                   <div
-                    key={proj.id}
+                    key={idx}
                     style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: '#fff' }}
                   >
                     <img
-                      src={proj.image}
-                      alt={proj.title}
-                      style={{ width: '100%', height: '140px', objectFit: 'cover' }}
+                      src={imgUrl}
+                      alt={`Portfolio Image ${idx + 1}`}
+                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
                       loading="lazy"
                     />
-                    <div style={{ padding: '0.75rem' }}>
-                      <div style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--slate-900)' }}>
-                        {proj.title}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--slate-500)', marginTop: '0.2rem' }}>
-                        📍 {proj.location} • {proj.area} • Completed {proj.year}
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>

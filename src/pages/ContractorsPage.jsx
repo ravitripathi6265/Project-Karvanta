@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { ContractorCard } from '../components/marketplace/ContractorCard';
 import { Search, MapPin, Filter, ShieldCheck, ArrowUpDown } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
 export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
   const { t } = useI18n();
@@ -46,28 +47,31 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
         addToast('Failed to load contractors.', 'error');
       } else {
         // Map to expected format
-        const formatted = data.map(profile => ({
-          id: profile.id,
-          name: profile.full_name || 'Unknown',
-          businessName: `${profile.full_name || 'Unknown'} Construction`,
-          profession: 'General Contractor',
-          city: profile.city || 'Nagpur',
-          locality: 'Main City',
-          rating: 0,
-          reviewCount: 0,
-          yearsExp: profile.professional_details?.experience_years || 0,
-          teamSize: 'Team Size Not Specified',
-          completedProjects: 0,
-          avatar: profile.avatar_url || 'https://via.placeholder.com/150',
-          portfolioImage: profile.professional_details?.portfolio_image_url || null,
-          verified: { identity: true },
-          services: profile.professional_details?.skills || [],
-          about: profile.professional_details?.bio || '',
-          languages: profile.professional_details?.languages || [],
-          availability: 'Available',
-          minBudget: 'Not Specified',
-          projects: []
-        }));
+        const formatted = data.map(profile => {
+          const profDetails = Array.isArray(profile.professional_details) ? profile.professional_details[0] : profile.professional_details;
+          return {
+            id: profile.id,
+            name: profile.full_name || 'Unknown',
+            businessName: `${profile.full_name || 'Unknown'} Construction`,
+            profession: 'General Contractor',
+            city: profile.city || 'Nagpur',
+            locality: 'Main City',
+            rating: 0,
+            reviewCount: 0,
+            yearsExp: profDetails?.experience_years || 0,
+            teamSize: 'Team Size Not Specified',
+            completedProjects: 0,
+            avatar: profile.avatar_url || 'https://via.placeholder.com/150',
+            portfolioImage: profDetails?.portfolio_image_url || null,
+            verified: { identity: true },
+            services: profDetails?.skills || [],
+            about: profDetails?.bio || '',
+            languages: profDetails?.languages || [],
+            availability: 'Available',
+            minBudget: 'Not Specified',
+            projects: []
+          };
+        });
         setContractors(formatted);
       }
       setLoading(false);
@@ -139,22 +143,11 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
           {/* City filter */}
           <div className="search-input-group">
             <MapPin size={16} color="var(--slate-400)" />
-            <select
+            <CityAutocomplete
               value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-            >
-              <option value="">{t('common.allCities')}</option>
-              <option value="Nagpur">Nagpur</option>
-              <option value="Pune">Pune</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Indore">Indore</option>
-              <option value="Bhopal">Bhopal</option>
-              <option value="Delhi">Delhi NCR</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Chennai">Chennai</option>
-              <option value="Bengaluru">Bengaluru</option>
-              <option value="Kolkata">Kolkata</option>
-            </select>
+              onChange={(val) => setSelectedCity(val)}
+              placeholder={t('common.allCities') || "Search city..."}
+            />
           </div>
 
           {/* Specialization */}

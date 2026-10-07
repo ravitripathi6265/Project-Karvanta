@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I18nProvider } from './i18n/i18nContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 
 // Components
@@ -10,6 +10,7 @@ import { Footer } from './components/common/Footer';
 import { LanguageSelectorModal } from './components/common/LanguageSelectorModal';
 
 // Modals
+import { OnboardingModal } from './components/common/OnboardingModal';
 import { ContractorProfileModal } from './components/profiles/ContractorProfileModal';
 import { WorkerProfileModal } from './components/profiles/WorkerProfileModal';
 import { RequestQuoteModal } from './components/profiles/RequestQuoteModal';
@@ -26,7 +27,14 @@ import { DashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
 
 function AppContent() {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
+
+  React.useEffect(() => {
+    if (currentUser?.role === 'admin' && activeTab !== 'admin') {
+      setActiveTab('admin');
+    }
+  }, [currentUser?.role]);
 
   // Selected Profile for Modals
   const [selectedContractor, setSelectedContractor] = useState(null);
@@ -67,6 +75,7 @@ function AppContent() {
     <>
       {/* First-visit Language Selector Modal */}
       <LanguageSelectorModal />
+      <OnboardingModal onSuccess={() => setActiveTab('dashboard')} />
 
       {/* Main Navigation */}
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />

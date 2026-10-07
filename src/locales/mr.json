@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "कर्मवन्त",
+    "name": "करवंता",
     "tagline": "भारतातील विश्वासार्ह बांधकाम व कामगार बाजारपेठ",
-    "logoAlt": "कर्मवन्त लोगो",
+    "logoAlt": "करवंता लोगो",
     "switchLanguage": "भाषा बदला",
     "selectLanguagePrompt": "तुमची भाषा निवडा / Choose your language",
     "continueBtn": "पुढे चला",
@@ -29,7 +29,7 @@
     "searchLocation": "ठिकाण प्रविष्ट करा (शहर / परिसर)",
     "findProfessionals": "व्यावसायिक शोधा",
     "postYourWork": "काम पोस्ट करा",
-    "howItWorksTitle": "कर्मवन्त कसे चालते",
+    "howItWorksTitle": "करवंता कसे चालते",
     "howItWorksSubtitle": "सोपे, पारदर्शक आणि थेट — घरमालक, कंत्राटदार आणि कामगारांच्या फायद्यासाठी.",
     "step1Title": "तुमची गरज निवडा",
     "step1Desc": "बांधकामासाठी कंत्राटदार, कुशल कारागीर किंवा रोजंदारी कामगार हवेत का ते निवडा.",
@@ -183,8 +183,8 @@
     "auditLogs": "सुरक्षा लॉग"
   },
   "auth": {
-    "loginTitle": "कर्मवन्तमध्ये लॉगिन करा",
-    "registerTitle": "कर्मवन्तवर नवीन खाते तयार करा",
+    "loginTitle": "करवंतामध्ये लॉगिन करा",
+    "registerTitle": "करवंतावर नवीन खाते तयार करा",
     "selectRole": "तुमची भूमिका निवडा",
     "phoneLabel": "मोबाईल नंबर",
     "phonePlaceholder": "१० अंकी मोबाईल नंबर प्रविष्ट करा",

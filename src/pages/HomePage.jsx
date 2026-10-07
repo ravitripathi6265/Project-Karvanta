@@ -20,6 +20,7 @@ import {
   BrickWall,
   Briefcase
 } from 'lucide-react';
+import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
 export const HomePage = ({
   setActiveTab,
@@ -100,23 +101,12 @@ export const HomePage = ({
 
               <div className="search-input-group">
                 <MapPin size={18} color="var(--slate-400)" />
-                <select
+                <CityAutocomplete
                   value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  aria-label={t('home.searchLocation')}
-                >
-                  <option value="">All Locations / ሁሉም</option>
-                  <option value="Nagpur">Nagpur (नागपूर)</option>
-                  <option value="Mumbai">Mumbai (मुंबई)</option>
-                  <option value="Pune">Pune (पुणे)</option>
-                  <option value="Indore">Indore (इंदौर)</option>
-                  <option value="Bhopal">Bhopal (भोपाल)</option>
-                  <option value="Delhi">Delhi NCR (दिल्ली)</option>
-                  <option value="Hyderabad">Hyderabad (హైదరాబాద్)</option>
-                  <option value="Chennai">Chennai (சென்னை)</option>
-                  <option value="Bengaluru">Bengaluru (ಬೆಂಗಳೂರು)</option>
-                  <option value="Kolkata">Kolkata (কলকাতা)</option>
-                </select>
+                  onChange={(val) => setSelectedCity(val)}
+                  placeholder={t('home.searchLocation') || "Search city..."}
+                  className="search-input-field"
+                />
               </div>
 
               <button type="submit" className="btn btn-primary btn-lg" style={{ height: '100%' }}>

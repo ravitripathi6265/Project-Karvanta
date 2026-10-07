@@ -101,6 +101,30 @@ export const WorkerProfileModal = ({ worker, isOpen, onClose, onHireWorker, onOp
               ))}
             </div>
           </div>
+          {/* Portfolio Images */}
+          {worker.portfolioImage && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--slate-800)' }}>
+                Work Evidence & Portfolio Images
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                {worker.portfolioImage.split(',').filter(Boolean).map((imgUrl, idx) => (
+                  <div
+                    key={idx}
+                    style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: '#fff' }}
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Portfolio Image ${idx + 1}`}
+                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
 
           {/* Direct Contact Buttons */}
           <div style={{ background: 'var(--primary-50)', padding: '1rem', borderRadius: 'var(--radius-lg)', marginBottom: '1.5rem', border: '1px solid var(--primary-100)' }}>

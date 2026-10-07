@@ -9,14 +9,14 @@ import {
 } from './initialData';
 
 const STORAGE_KEYS = {
-  USERS: 'karvanta_db_users',
-  CONTRACTORS: 'karvanta_db_contractors',
-  WORKERS: 'karvanta_db_workers',
-  LABOUR_POSTS: 'karvanta_db_labour_posts',
-  QUOTATIONS: 'karvanta_db_quotations',
-  REVIEWS: 'karvanta_db_reviews',
-  NOTIFICATIONS: 'karvanta_db_notifications',
-  AUDIT_LOGS: 'karvanta_db_audit_logs'
+  USERS: 'karvanta_db_users_v2',
+  CONTRACTORS: 'karvanta_db_contractors_v2',
+  WORKERS: 'karvanta_db_workers_v2',
+  LABOUR_POSTS: 'karvanta_db_labour_posts_v2',
+  QUOTATIONS: 'karvanta_db_quotations_v2',
+  REVIEWS: 'karvanta_db_reviews_v2',
+  NOTIFICATIONS: 'karvanta_db_notifications_v2',
+  AUDIT_LOGS: 'karvanta_db_audit_logs_v2'
 };
 
 const getFromStorage = (key, defaultData) => {
@@ -44,10 +44,10 @@ const setToStorage = (key, data) => {
 
 export const dbService = {
   // Cities
-  getCities: () => INITIAL_CITIES,
+  getCities: () => [],
 
   // Users
-  getUsers: () => getFromStorage(STORAGE_KEYS.USERS, INITIAL_USERS),
+  getUsers: () => getFromStorage(STORAGE_KEYS.USERS, []),
 
   getUserById: (id) => {
     const users = dbService.getUsers();
@@ -133,7 +133,7 @@ export const dbService = {
   },
 
   // Contractors
-  getContractors: () => getFromStorage(STORAGE_KEYS.CONTRACTORS, INITIAL_CONTRACTORS),
+  getContractors: () => getFromStorage(STORAGE_KEYS.CONTRACTORS, []),
 
   getContractorById: (id) => {
     const list = dbService.getContractors();
@@ -152,7 +152,7 @@ export const dbService = {
   },
 
   // Workers
-  getWorkers: () => getFromStorage(STORAGE_KEYS.WORKERS, INITIAL_WORKERS),
+  getWorkers: () => getFromStorage(STORAGE_KEYS.WORKERS, []),
 
   getWorkerById: (id) => {
     const list = dbService.getWorkers();
@@ -182,7 +182,7 @@ export const dbService = {
   },
 
   // Labour Chowk / Job Posts
-  getLabourPosts: () => getFromStorage(STORAGE_KEYS.LABOUR_POSTS, INITIAL_LABOUR_POSTS),
+  getLabourPosts: () => getFromStorage(STORAGE_KEYS.LABOUR_POSTS, []),
 
   createLabourPost: (postData) => {
     const posts = dbService.getLabourPosts();
@@ -231,7 +231,7 @@ export const dbService = {
   },
 
   // Quotations
-  getQuotations: () => getFromStorage(STORAGE_KEYS.QUOTATIONS, INITIAL_QUOTATIONS),
+  getQuotations: () => getFromStorage(STORAGE_KEYS.QUOTATIONS, []),
 
   createQuotationRequest: (quoteData) => {
     const quotes = dbService.getQuotations();
@@ -280,7 +280,7 @@ export const dbService = {
 
   // Reviews
   getReviews: (targetType = null, targetId = null) => {
-    let reviews = getFromStorage(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
+    let reviews = getFromStorage(STORAGE_KEYS.REVIEWS, []);
     if (targetType) {
       reviews = reviews.filter(r => r.targetType === targetType);
     }

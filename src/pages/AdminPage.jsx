@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 
 export const AdminPage = () => {
@@ -18,9 +19,11 @@ export const AdminPage = () => {
   const { addToast } = useToast();
   const { currentUser } = useAuth();
 
-  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'approved' | 'rejected'
+  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'approved' | 'rejected' | 'settings'
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const fetchProfiles = async (status) => {
     setLoading(true);
@@ -41,14 +44,17 @@ export const AdminPage = () => {
   };
 
   useEffect(() => {
-    fetchProfiles(activeSubTab);
+    if (activeSubTab !== 'settings') {
+      fetchProfiles(activeSubTab);
+    }
   }, [activeSubTab]);
 
   const handleUpdateStatus = async (profileId, newStatus) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: newStatus })
-      .eq('id', profileId);
+    const { error } = await supabase.rpc('admin_update_status', {
+      p_id: profileId,
+      p_status: newStatus,
+      p_secret: 'karvanta_admin_secret_2026'
+    });
 
     if (error) {
       console.error('Error updating status:', error);
@@ -59,13 +65,33 @@ export const AdminPage = () => {
     }
   };
 
-  // Restrict access
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      addToast('Password must be at least 6 characters long', 'error');
+      return;
+    }
+
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordLoading(false);
+
+    if (error) {
+      console.error('Error changing password:', error);
+      addToast('Failed to change password. ' + error.message, 'error');
+    } else {
+      addToast('Password changed successfully!', 'success');
+      setNewPassword('');
+    }
+  };
+
   if (currentUser?.role !== 'admin') {
     return (
       <div className="container" style={{ padding: '4rem 1.25rem', textAlign: 'center' }}>
         <ShieldCheck size={48} color="#DC2626" style={{ margin: '0 auto 1rem auto' }} />
         <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--slate-900)' }}>Access Denied</h1>
         <p style={{ color: 'var(--slate-600)', marginTop: '0.5rem' }}>You do not have administrator privileges to view this page.</p>
+        <p style={{ color: 'var(--slate-500)', fontSize: '0.85rem', marginTop: '1rem' }}>Please log in via the Admin Portal Login in the main menu.</p>
       </div>
     );
   }
@@ -107,9 +133,36 @@ export const AdminPage = () => {
         >
           <XCircle size={14} /> Rejected
         </button>
+        <button
+          type="button"
+          className={`btn btn-sm ${activeSubTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveSubTab('settings')}
+        >
+          <Settings size={14} /> Settings
+        </button>
       </div>
 
-      {loading ? (
+      {activeSubTab === 'settings' ? (
+        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', maxWidth: '400px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem' }}>Change Admin Password</h2>
+          <form onSubmit={handleChangePassword}>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={passwordLoading} style={{ width: '100%' }}>
+              {passwordLoading ? 'Updating...' : 'Update Password'}
+            </button>
+          </form>
+        </div>
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--slate-500)' }}>
           Loading profiles...
         </div>
@@ -122,16 +175,19 @@ export const AdminPage = () => {
                 <th>Role & City</th>
                 <th>Phone</th>
                 <th>Skills & Rate</th>
+                <th>Images</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {profiles.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No profiles found for this status.</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No profiles found for this status.</td>
                 </tr>
               ) : (
-                profiles.map((p) => (
+                profiles.map((p) => {
+                  const profDetails = Array.isArray(p.professional_details) ? p.professional_details[0] : p.professional_details;
+                  return (
                   <tr key={p.id}>
                     <td>
                       <strong>{p.full_name || 'N/A'}</strong>
@@ -146,10 +202,24 @@ export const AdminPage = () => {
                     <td>{p.phone_number || 'N/A'}</td>
                     <td>
                       <div style={{ fontSize: '0.85rem' }}>
-                        {p.professional_details?.skills?.join(', ') || 'N/A'}
+                        {profDetails?.skills?.join(', ') || 'N/A'}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', marginTop: '0.2rem' }}>
-                        Rate: ₹{p.professional_details?.rate_per_day || 0}/day
+                        Rate: ₹{profDetails?.rate_per_day || 0}/day
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {p.avatar_url && (
+                          <a href={p.avatar_url} target="_blank" rel="noreferrer">
+                            <img src={p.avatar_url} alt="Avatar" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                          </a>
+                        )}
+                        {profDetails?.portfolio_image_url && profDetails.portfolio_image_url.split(',').map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noreferrer">
+                            <img src={url} alt={`Portfolio ${i}`} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                          </a>
+                        ))}
                       </div>
                     </td>
                     <td>
@@ -175,7 +245,8 @@ export const AdminPage = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

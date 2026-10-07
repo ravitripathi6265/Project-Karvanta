@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
 import { Zap, PlusCircle, Check, X, MapPin, Calendar, Clock, Users, IndianRupee } from 'lucide-react';
+import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
 export const LabourMarketplacePage = ({ onOpenPostJob }) => {
   const { t } = useI18n();
@@ -103,14 +104,11 @@ export const LabourMarketplacePage = ({ onOpenPostJob }) => {
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <div className="search-input-group" style={{ maxWidth: '240px' }}>
           <MapPin size={16} color="var(--slate-400)" />
-          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
-            <option value="">{t('common.allCities')}</option>
-            <option value="Nagpur">Nagpur</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Pune">Pune</option>
-            <option value="Chennai">Chennai</option>
-            <option value="Delhi">Delhi NCR</option>
-          </select>
+          <CityAutocomplete 
+            value={selectedCity} 
+            onChange={(val) => setSelectedCity(val)} 
+            placeholder={t('common.allCities') || "Search city..."} 
+          />
         </div>
 
         <div className="search-input-group" style={{ maxWidth: '240px' }}>
