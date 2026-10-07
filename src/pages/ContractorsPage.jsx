@@ -28,6 +28,7 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
           id,
           full_name,
           city,
+          phone_number,
           avatar_url,
           status,
           professional_details (
@@ -69,6 +70,8 @@ export const ContractorsPage = ({ onViewContractor, onRequestQuote }) => {
             languages: profDetails?.languages || [],
             availability: 'Available',
             minBudget: 'Not Specified',
+            phone: profile.phone_number || '',
+            rate: profDetails?.rate_per_day || 0,
             projects: []
           };
         });

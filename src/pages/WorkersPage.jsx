@@ -37,7 +37,8 @@ export const WorkersPage = ({ onViewWorker, onHireWorker }) => {
             experience_years,
             rate_per_day,
             languages,
-            bio
+            bio,
+            portfolio_image_url
           )
         `)
         .eq('role', 'worker')

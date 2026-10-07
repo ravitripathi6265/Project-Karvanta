@@ -48,7 +48,7 @@ export const ContractorProfileModal = ({ contractor, isOpen, onClose, onRequestQ
 
         <div className="modal-body">
           {/* Quick Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', background: 'var(--slate-50)', padding: '1rem', borderRadius: 'var(--radius-lg)', marginBottom: '1.25rem', border: '1px solid var(--slate-200)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', background: 'var(--slate-50)', padding: '1rem', borderRadius: 'var(--radius-lg)', marginBottom: '1.25rem', border: '1px solid var(--slate-200)' }}>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', fontWeight: '600' }}>RATING</div>
               <RatingStars rating={contractor.rating} count={contractor.reviewCount} />
@@ -56,6 +56,10 @@ export const ContractorProfileModal = ({ contractor, isOpen, onClose, onRequestQ
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', fontWeight: '600' }}>EXPERIENCE</div>
               <div style={{ fontWeight: '800', color: 'var(--slate-900)' }}>{contractor.yearsExp} Years</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', fontWeight: '600' }}>RATE (₹)</div>
+              <div style={{ fontWeight: '800', color: 'var(--slate-900)' }}>₹{contractor.rate || 0}/day</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', fontWeight: '600' }}>PROJECTS</div>
@@ -176,6 +180,15 @@ export const ContractorProfileModal = ({ contractor, isOpen, onClose, onRequestQ
         </div>
 
         <div className="modal-footer">
+          {contractor.phone && (
+            <a 
+              href={`tel:${contractor.phone}`} 
+              className="btn" 
+              style={{ background: '#25D366', color: 'white', border: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', marginRight: 'auto' }}
+            >
+              <Phone size={16} /> Call (+{contractor.phone})
+            </a>
+          )}
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             {t('common.close')}
           </button>
