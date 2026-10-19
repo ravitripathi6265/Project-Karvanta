@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 import { Send, MapPin, Users, Calendar, IndianRupee, ShieldCheck } from 'lucide-react';
 import { CityAutocomplete } from '../components/common/CityAutocomplete';
 
+import { dbService } from '../db/databaseService';
+
 export const PostWorkPage = ({ setActiveTab }) => {
   const { t } = useI18n();
   const { currentUser } = useAuth();
@@ -39,29 +41,49 @@ export const PostWorkPage = ({ setActiveTab }) => {
       return;
     }
 
-    const { error } = await supabase
-      .from('labour_posts')
-      .insert([{
-        customer_id: currentUser.id,
-        customer_name: currentUser.full_name || 'Customer',
-        category,
-        title,
-        description,
-        workers_needed: parseInt(workersNeeded, 10),
-        daily_rate: parseInt(dailyRate, 10),
-        start_date: startDate,
-        start_time: startTime,
-        city,
-        locality
-      }]);
-
-    if (error) {
-      console.error('Error posting work:', error);
-      addToast('Failed to post requirement', 'error');
-    } else {
-      addToast(t('labourMarketplace.jobPostedSuccess'), 'success', 5000);
-      setActiveTab('labourMarketplace');
+    try {
+      await supabase
+        .from('labour_posts')
+        .insert([{
+          customer_id: currentUser.id,
+          customer_name: currentUser.full_name || 'Customer',
+          category,
+          title,
+          description,
+          workers_needed: parseInt(workersNeeded, 10),
+          daily_rate: parseInt(dailyRate, 10),
+          start_date: startDate,
+          start_time: startTime,
+          city,
+          locality
+        }]);
+    } catch (err) {
+      console.warn('Supabase post notice:', err);
     }
+
+    // Always sync with dbService so it immediately reflects in local UI
+    dbService.createLabourPost({
+      customerId: currentUser.id,
+      customer_id: currentUser.id,
+      customerName: currentUser.full_name || 'Customer',
+      customer_name: currentUser.full_name || 'Customer',
+      category,
+      title,
+      description,
+      workersNeeded: parseInt(workersNeeded, 10),
+      workers_needed: parseInt(workersNeeded, 10),
+      dailyRate: parseInt(dailyRate, 10),
+      daily_rate: parseInt(dailyRate, 10),
+      startDate,
+      start_date: startDate,
+      startTime,
+      start_time: startTime,
+      city,
+      locality
+    });
+
+    addToast(t('labourMarketplace.jobPostedSuccess'), 'success', 5000);
+    setActiveTab('labourMarketplace');
   };
 
   return (

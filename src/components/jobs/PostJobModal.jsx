@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/i18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { dbService } from '../../db/databaseService';
+import { supabase } from '../../lib/supabase';
 import { X, Send, Calendar, Clock, MapPin, IndianRupee, Users } from 'lucide-react';
 import { CityAutocomplete } from '../common/CityAutocomplete';
 
@@ -16,40 +17,75 @@ export const PostJobModal = ({ isOpen, onClose, onJobCreated }) => {
   const [description, setDescription] = useState('');
   const [workersNeeded, setWorkersNeeded] = useState(2);
   const [dailyRate, setDailyRate] = useState(1000);
-  const [startDate, setStartDate] = useState('Tomorrow');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
   const [startTime, setStartTime] = useState('8:00 AM');
   const [duration, setDuration] = useState('1 Day');
   const [city, setCity] = useState(currentUser?.city || 'Nagpur');
   const [locality, setLocality] = useState('Dharampeth');
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
       addToast('Please provide a title and work description', 'error');
       return;
     }
 
-    const newPost = dbService.createLabourPost({
-      customerId: currentUser?.id || 'u_cust_1',
-      customerName: currentUser?.name || 'Anand Deshmukh',
-      customerPhone: currentUser?.phone || '9822114455',
-      category,
-      title,
-      description,
-      workersNeeded: parseInt(workersNeeded, 10),
-      dailyRate: parseInt(dailyRate, 10),
-      startDate,
-      startTime,
-      duration,
-      city,
-      locality
-    });
+    setSubmitting(true);
 
-    addToast(t('labourMarketplace.jobPostedSuccess'), 'success', 5000);
-    if (onJobCreated) onJobCreated(newPost);
-    onClose();
+    try {
+      const { data, error } = await supabase
+        .from('labour_posts')
+        .insert([{
+          customer_id: currentUser?.id || null,
+          customer_name: currentUser?.full_name || currentUser?.name || 'Customer',
+          category,
+          title,
+          description,
+          workers_needed: parseInt(workersNeeded, 10),
+          daily_rate: parseInt(dailyRate, 10),
+          start_date: startDate,
+          start_time: startTime,
+          city,
+          locality,
+          status: 'active'
+        }]);
+
+      if (error) {
+        console.error('Error posting to Supabase:', error);
+        // Fallback to local storage if Supabase fails
+        dbService.createLabourPost({
+          customerId: currentUser?.id || 'u_cust_1',
+          customerName: currentUser?.name || 'Customer',
+          customerPhone: currentUser?.phone || '9822114455',
+          category,
+          title,
+          description,
+          workersNeeded: parseInt(workersNeeded, 10),
+          dailyRate: parseInt(dailyRate, 10),
+          startDate,
+          startTime,
+          duration,
+          city,
+          locality
+        });
+      }
+
+      addToast(t('labourMarketplace.jobPostedSuccess'), 'success', 5000);
+      if (onJobCreated) onJobCreated();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to post requirement', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -149,9 +185,8 @@ export const PostJobModal = ({ isOpen, onClose, onJobCreated }) => {
               <div className="form-group">
                 <label className="form-label">{t('labourMarketplace.startDate')}</label>
                 <input
-                  type="text"
+                  type="date"
                   className="form-control"
-                  placeholder="Tomorrow / Date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required

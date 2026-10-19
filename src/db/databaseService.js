@@ -47,7 +47,7 @@ export const dbService = {
   getCities: () => [],
 
   // Users
-  getUsers: () => getFromStorage(STORAGE_KEYS.USERS, []),
+  getUsers: () => getFromStorage(STORAGE_KEYS.USERS, INITIAL_USERS),
 
   getUserById: (id) => {
     const users = dbService.getUsers();
@@ -133,7 +133,7 @@ export const dbService = {
   },
 
   // Contractors
-  getContractors: () => getFromStorage(STORAGE_KEYS.CONTRACTORS, []),
+  getContractors: () => getFromStorage(STORAGE_KEYS.CONTRACTORS, INITIAL_CONTRACTORS),
 
   getContractorById: (id) => {
     const list = dbService.getContractors();
@@ -152,7 +152,7 @@ export const dbService = {
   },
 
   // Workers
-  getWorkers: () => getFromStorage(STORAGE_KEYS.WORKERS, []),
+  getWorkers: () => getFromStorage(STORAGE_KEYS.WORKERS, INITIAL_WORKERS),
 
   getWorkerById: (id) => {
     const list = dbService.getWorkers();
@@ -182,7 +182,7 @@ export const dbService = {
   },
 
   // Labour Chowk / Job Posts
-  getLabourPosts: () => getFromStorage(STORAGE_KEYS.LABOUR_POSTS, []),
+  getLabourPosts: () => getFromStorage(STORAGE_KEYS.LABOUR_POSTS, INITIAL_LABOUR_POSTS),
 
   createLabourPost: (postData) => {
     const posts = dbService.getLabourPosts();
@@ -201,29 +201,56 @@ export const dbService = {
     dbService.createNotification({
       targetRole: 'worker',
       title: 'New Labour Opportunity in ' + newPost.city,
-      message: `${newPost.workersNeeded} workers needed: ${newPost.title} at ₹${newPost.dailyRate}/day`,
+      message: `${newPost.workersNeeded || newPost.workers_needed} workers needed: ${newPost.title} at ₹${newPost.dailyRate || newPost.daily_rate}/day`,
       link: '/labour-chowk'
     });
 
     return newPost;
   },
 
-  applyForLabourPost: (postId, workerId) => {
+  deleteLabourPost: (postId, userId = null) => {
+    const posts = dbService.getLabourPosts();
+    const updated = posts.filter(p => p.id !== postId);
+    setToStorage(STORAGE_KEYS.LABOUR_POSTS, updated);
+    dbService.addAuditLog('Labour Post Deleted', `Labour requirement ${postId} deleted`);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('karvanta-post-updated', { detail: { postId, deleted: true } }));
+    }
+    return { success: true };
+  },
+
+  applyForLabourPost: (postId, workerId, workerName = null, workerPhone = null) => {
     const posts = dbService.getLabourPosts();
     const post = posts.find(p => p.id === postId);
     if (post) {
-      if (!post.applicants.includes(workerId)) {
-        post.applicants.push(workerId);
+      if (!post.applicants) post.applicants = [];
+      const alreadyApplied = post.applicants.some(a => 
+        (typeof a === 'string' ? a === workerId : a.id === workerId)
+      );
+
+      if (!alreadyApplied) {
+        const applicantRecord = {
+          id: workerId,
+          name: workerName || 'कुशल कारीगर',
+          phone: workerPhone || 'संपर्क उपलब्ध',
+          appliedAt: new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })
+        };
+        post.applicants.push(applicantRecord);
         setToStorage(STORAGE_KEYS.LABOUR_POSTS, posts);
-        dbService.addAuditLog('Labour Job Accepted', `Worker ${workerId} accepted job ${postId}`);
+        dbService.addAuditLog('Labour Job Accepted', `Worker ${workerName || workerId} accepted job ${postId}`);
         
-        // Notify customer
+        // Notify customer / contractor
         dbService.createNotification({
-          userId: post.customerId,
-          title: 'Worker Accepted Your Work!',
-          message: `A skilled worker has accepted your post "${post.title}". Check details in dashboard.`,
+          userId: post.customerId || post.customer_id,
+          title: 'कारीगर ने काम स्वीकार किया! (Work Accepted)',
+          message: `${workerName || 'एक कुशल कारीगर'} ने आपकी पोस्ट "${post.title}" के लिए काम स्वीकार कर लिया है। संपर्क: ${workerPhone || 'डैशबोर्ड पर देखें'}`,
           link: '/dashboard'
         });
+
+        // Dispatch cross-component synchronization event
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('karvanta-post-updated', { detail: { postId, post } }));
+        }
       }
       return { success: true, post };
     }

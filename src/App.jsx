@@ -16,6 +16,7 @@ import { WorkerProfileModal } from './components/profiles/WorkerProfileModal';
 import { RequestQuoteModal } from './components/profiles/RequestQuoteModal';
 import { ReviewModal } from './components/profiles/ReviewModal';
 import { PostJobModal } from './components/jobs/PostJobModal';
+import { KarvantaAiAgent } from './components/agent/KarvantaAiAgent';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -171,6 +172,13 @@ function AppContent() {
         isOpen={isPostJobOpen}
         onClose={() => setIsPostJobOpen(false)}
         onJobCreated={() => setActiveTab('labourMarketplace')}
+      />
+
+      {/* Karvanta AI Voice & Chat Assistant */}
+      <KarvantaAiAgent
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenPostJob={() => setIsPostJobOpen(true)}
       />
     </>
   );

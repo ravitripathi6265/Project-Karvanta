@@ -16,9 +16,11 @@ import {
   Phone,
   ShieldCheck,
   Edit3,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { CityAutocomplete } from '../components/common/CityAutocomplete';
+import { dbService } from '../db/databaseService';
 
 export const DashboardPage = ({ setActiveTab }) => {
   const { t } = useI18n();
@@ -56,22 +58,63 @@ export const DashboardPage = ({ setActiveTab }) => {
     setEditName(currentUser.full_name || '');
     setEditCity(currentUser.city || 'Nagpur');
     setEditPhone(currentUser.phone_number || '');
+
+    const handlePostUpdate = () => {
+      if (role === 'customer') fetchCustomerPosts();
+      if (role === 'worker') fetchWorkerOpportunities();
+    };
+    window.addEventListener('karvanta-post-updated', handlePostUpdate);
+    return () => window.removeEventListener('karvanta-post-updated', handlePostUpdate);
   }, [currentUser, role]);
 
   const fetchCustomerPosts = async () => {
-    const { data, error } = await supabase
-      .from('labour_posts')
-      .select('*, job_applicants(worker_id)')
-      .eq('customer_id', currentUser.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('labour_posts')
+        .select('*, job_applicants(worker_id)')
+        .eq('customer_id', currentUser.id)
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      const formatted = data.map(post => ({
+      if (!error && data && data.length > 0) {
+        const formatted = data.map(post => ({
+          ...post,
+          applicants: post.job_applicants.map(a => a.worker_id)
+        }));
+        setLabourPosts(formatted);
+      } else {
+        const local = dbService.getLabourPosts().filter(p => p.customerId === currentUser.id || p.customer_id === currentUser.id);
+        setLabourPosts(local.map(post => ({
+          ...post,
+          id: post.id,
+          daily_rate: post.daily_rate || post.dailyRate,
+          workers_needed: post.workers_needed || post.workersNeeded,
+          start_date: post.start_date || post.startDate,
+          applicants: post.applicants || []
+        })));
+      }
+    } catch {
+      const local = dbService.getLabourPosts().filter(p => p.customerId === currentUser.id || p.customer_id === currentUser.id);
+      setLabourPosts(local.map(post => ({
         ...post,
-        applicants: post.job_applicants.map(a => a.worker_id)
-      }));
-      setLabourPosts(formatted);
+        id: post.id,
+        daily_rate: post.daily_rate || post.dailyRate,
+        workers_needed: post.workers_needed || post.workersNeeded,
+        start_date: post.start_date || post.startDate,
+        applicants: post.applicants || []
+      })));
     }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('Are you sure you want to delete this job requirement? / क्या आप यह काम हटाना चाहते हैं?')) return;
+    try {
+      await supabase.from('labour_posts').delete().eq('id', postId);
+    } catch (err) {
+      console.warn('Supabase delete error:', err);
+    }
+    dbService.deleteLabourPost(postId);
+    setLabourPosts(prev => prev.filter(p => p.id !== postId));
+    addToast('Task deleted successfully / काम हटा दिया गया है', 'success');
   };
 
   const fetchProfessionalDetails = async () => {
@@ -309,9 +352,33 @@ export const DashboardPage = ({ setActiveTab }) => {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid var(--slate-100)', fontSize: '0.85rem' }}>
                     <span style={{ color: 'var(--emerald-600)', fontWeight: '700' }}>
-                      {post.applicants.length} Karigars Applied
+                      {post.applicants.length} कारीगर जुड़े (Applicants)
                     </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                      onClick={() => handleDeletePost(post.id)}
+                      title="Delete this task"
+                    >
+                      <Trash2 size={13} /> Delete Task
+                    </button>
                   </div>
+
+                  {/* Real Applicant Details for Contractor / Poster */}
+                  {post.applicants && post.applicants.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', padding: '0.6rem 0.8rem', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 'var(--radius-md)' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#166534', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                        ✓ काम स्वीकार करने वाले कारीगर (Accepted Karigars):
+                      </div>
+                      {post.applicants.map((a, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', color: '#14532D', padding: '0.2rem 0', borderBottom: i < post.applicants.length - 1 ? '1px dashed #DCFCE7' : 'none' }}>
+                          <span>👷 <strong>{typeof a === 'string' ? 'कारीगर' : a.name}</strong></span>
+                          <span style={{ color: '#15803D', fontWeight: '600' }}>📞 {typeof a === 'string' ? 'संपर्क उपलब्ध' : a.phone}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -507,7 +574,7 @@ export const DashboardPage = ({ setActiveTab }) => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {labourPosts.map((post) => {
-                  const hasApplied = post.applicants.includes(currentUser.id);
+                  const hasApplied = (post.applicants || []).some(a => (typeof a === 'string' ? a === currentUser.id : a?.id === currentUser.id));
                   return (
                     <div key={post.id} className="chowk-card">
                       <div className="chowk-card-header">

@@ -77,6 +77,66 @@ export const HomePage = ({
             {t('home.heroSubtitle')}
           </p>
 
+          {/* AI Voice Assistant Banner for non-readers / quick action */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 237, 213, 0.98) 100%)',
+              border: '2px solid #FDBA74',
+              borderRadius: 'var(--radius-xl)',
+              padding: '0.85rem 1.25rem',
+              maxWidth: '680px',
+              margin: '0 auto 1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              boxShadow: '0 8px 20px -4px rgba(234, 88, 12, 0.15)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '1.25rem',
+                  boxShadow: '0 4px 10px rgba(234, 88, 12, 0.3)'
+                }}
+              >
+                🎙️
+              </div>
+              <div>
+                <div style={{ fontWeight: '800', color: '#9A3412', fontSize: '0.95rem' }}>
+                  लिखना-पढ़ना नहीं आता? सिर्फ बोलकर काम पाएं या दें!
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#7C2D12', fontWeight: '500' }}>
+                  "आज आपके लिए काम है, क्या बात करा दूँ?" — सिर्फ बोलकर आज का काम पाएं!
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              style={{
+                borderRadius: 'var(--radius-full)',
+                fontWeight: '800',
+                fontSize: '0.85rem',
+                padding: '0.5rem 1.1rem',
+                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.35)'
+              }}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-karvanta-ai'))}
+            >
+              साथी से बात करें 🎙️
+            </button>
+          </div>
+
           {/* Search Box Card */}
           <div className="search-card-container">
             <form onSubmit={handleSearchSubmit} className="search-grid">

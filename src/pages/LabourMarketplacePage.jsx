@@ -3,8 +3,9 @@ import { useI18n } from '../i18n/i18nContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
-import { Zap, PlusCircle, Check, X, MapPin, Calendar, Clock, Users, IndianRupee } from 'lucide-react';
+import { Zap, PlusCircle, Check, X, MapPin, Calendar, Clock, Users, IndianRupee, Trash2 } from 'lucide-react';
 import { CityAutocomplete } from '../components/common/CityAutocomplete';
+import { dbService } from '../db/databaseService';
 
 export const LabourMarketplacePage = ({ onOpenPostJob }) => {
   const { t } = useI18n();
@@ -21,46 +22,102 @@ export const LabourMarketplacePage = ({ onOpenPostJob }) => {
 
   const fetchPosts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('labour_posts')
-      .select('*, job_applicants(worker_id)')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('labour_posts')
+        .select('*, job_applicants(worker_id)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching jobs:', error);
-      addToast('Failed to fetch labour posts', 'error');
-    } else {
-      const formatted = data.map(post => ({
+      if (error || !data || data.length === 0) {
+        // Fallback to local storage posts
+        const localPosts = dbService.getLabourPosts().filter(p => p.status === 'active');
+        const formatted = localPosts.map(post => ({
+          ...post,
+          id: post.id,
+          title: post.title,
+          category: post.category,
+          daily_rate: post.daily_rate || post.dailyRate,
+          workers_needed: post.workers_needed || post.workersNeeded,
+          start_date: post.start_date || post.startDate,
+          start_time: post.start_time || post.startTime,
+          customer_name: post.customer_name || post.customerName,
+          customer_id: post.customer_id || post.customerId,
+          city: post.city,
+          locality: post.locality,
+          description: post.description,
+          applicants: post.applicants || []
+        }));
+        setPosts(formatted);
+      } else {
+        const formatted = data.map(post => ({
+          ...post,
+          applicants: (post.job_applicants || []).map(a => a.worker_id)
+        }));
+        setPosts(formatted);
+      }
+    } catch (err) {
+      console.warn('Error fetching jobs, using local store:', err);
+      const localPosts = dbService.getLabourPosts().filter(p => p.status === 'active');
+      setPosts(localPosts.map(post => ({
         ...post,
-        applicants: post.job_applicants.map(a => a.worker_id)
-      }));
-      setPosts(formatted);
+        daily_rate: post.daily_rate || post.dailyRate,
+        workers_needed: post.workers_needed || post.workersNeeded,
+        start_date: post.start_date || post.startDate,
+        start_time: post.start_time || post.startTime,
+        customer_name: post.customer_name || post.customerName,
+        customer_id: post.customer_id || post.customerId,
+        applicants: post.applicants || []
+      })));
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchPosts();
+    const handleUpdate = () => fetchPosts();
+    window.addEventListener('karvanta-post-updated', handleUpdate);
+    return () => window.removeEventListener('karvanta-post-updated', handleUpdate);
   }, []);
+
+  const handleDeleteJob = async (jobId) => {
+    const confirmMsg = t('labourMarketplace.deleteConfirm') || 'Are you sure you want to delete this job requirement?';
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await supabase.from('labour_posts').delete().eq('id', jobId);
+    } catch (err) {
+      console.warn('Supabase delete error:', err);
+    }
+
+    dbService.deleteLabourPost(jobId);
+    setPosts(prev => prev.filter(p => p.id !== jobId));
+    addToast(t('labourMarketplace.jobDeletedSuccess') || 'Requirement deleted successfully!', 'success');
+  };
 
   const handleAcceptJob = async (jobId) => {
     if (!currentWorkerId) {
-      addToast('Please login as a worker to apply', 'error');
+      addToast('Please login to apply for this job', 'error');
       return;
     }
     
-    const { error } = await supabase
-      .from('job_applicants')
-      .insert([{ job_id: jobId, worker_id: currentWorkerId }]);
-      
-    if (error) {
-      console.error('Error applying for job:', error);
-      addToast('Error applying for this job', 'error');
-    } else {
-      addToast(t('labourMarketplace.applicationSent'), 'success', 5000);
-      fetchPosts();
+    try {
+      await supabase
+        .from('job_applicants')
+        .insert([{ job_id: jobId, worker_id: currentWorkerId }]);
+    } catch (error) {
+      console.warn('Supabase apply error:', error);
     }
+      
+    dbService.applyForLabourPost(
+      jobId,
+      currentWorkerId,
+      currentUser?.full_name || currentUser?.name || 'कुशल कारीगर',
+      currentUser?.phone_number || currentUser?.phone
+    );
+
+    addToast(t('labourMarketplace.applicationSent') || 'काम स्वीकार कर लिया गया है!', 'success', 5000);
+    fetchPosts();
   };
 
   const handleDeclineJob = (jobId) => {
@@ -145,7 +202,7 @@ export const LabourMarketplacePage = ({ onOpenPostJob }) => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {filteredPosts.map((job) => {
-            const hasApplied = currentWorkerId ? job.applicants.includes(currentWorkerId) : false;
+            const hasApplied = currentWorkerId ? (job.applicants || []).some(a => (typeof a === 'string' ? a === currentWorkerId : a?.id === currentWorkerId)) : false;
 
             return (
               <div key={job.id} className="chowk-card">
@@ -192,7 +249,19 @@ export const LabourMarketplacePage = ({ onOpenPostJob }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {currentUser && (currentUser.id === job.customer_id || currentUser.id === job.customerId || currentUser.role === 'admin') && (
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                        onClick={() => handleDeleteJob(job.id)}
+                        title={t('labourMarketplace.deleteJob') || 'Delete Post'}
+                      >
+                        <Trash2 size={14} /> {t('labourMarketplace.deleteJob') || 'Delete Post'}
+                      </button>
+                    )}
+
                     {hasApplied ? (
                       <span className="btn btn-sm" style={{ background: 'var(--emerald-100)', color: 'var(--emerald-800)', fontWeight: '700' }}>
                         ✓ {t('labourMarketplace.accepted')}

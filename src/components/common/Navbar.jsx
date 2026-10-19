@@ -20,6 +20,12 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
   const { currentUser, isLoggedIn, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  React.useEffect(() => {
+    const handleOpenAuth = () => setShowAuthModal(true);
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+    return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
+  }, []);
+
   return (
     <>
       {/* Main Navbar */}
@@ -102,6 +108,28 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
 
           {/* Actions: Language Switcher & Auth */}
           <div className="nav-actions">
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{
+                background: 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)',
+                border: '1px solid #FDBA74',
+                color: '#C2410C',
+                fontWeight: '800',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                borderRadius: 'var(--radius-full)',
+                padding: '0.35rem 0.75rem',
+                cursor: 'pointer'
+              }}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-karvanta-ai'))}
+              title="करवंता साथी से बोलकर काम पाएं या दें (AI Voice Assistant)"
+            >
+              <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>🎙️</span>
+              <span style={{ fontSize: '0.85rem' }}>AI साथी</span>
+            </button>
+
             <LanguageDropdown />
 
             {isLoggedIn ? (
