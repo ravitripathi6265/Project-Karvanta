@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       // Fallback for local testing or simple deployment without Supabase setup
       const adminEmail = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-      const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+      const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'ravi@6265';
 
       if (email === adminEmail && password === adminPass) {
         const mockAdmin = {
